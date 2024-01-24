@@ -85,7 +85,7 @@ function App(props) {
 1. **定制性：** 对于每个过滤器类型，只能直接使用默认的 `key`，不够灵活。如果需要在渲染时进行更多的自定义逻辑，可能需要额外的处理。
 2. **可读性：** 对于不熟悉该模式的开发者来说，理解映射关系可能需要一些额外的思考。
 
-#### 应用
+#### 示例
 
 > 多组件模式
 
@@ -192,7 +192,7 @@ function App() {
 
 ### 😆 状态提前返回
 
-> ❌ 条件嵌套，导致代码可读性变差
+> ❌ 过多的条件嵌套，导致代码可读性变差
 
 ```jsx
 function App({ user }) {
@@ -217,7 +217,7 @@ function App({ user }) {
 }
 ```
 
-> 🎉 条件提前返回，提高可读性
+> 🎉 通过条件提前返回，提高可读性
 
 ```jsx
 function App({ user }) {
@@ -240,6 +240,78 @@ function App({ user }) {
 	const isValidUser = validateUser(user);
 	// rest of jsx...
 }
+```
+
+### 🥲 避免包裹地狱
+
+> ❌ 繁琐嵌套
+
+```jsx
+const root = createRoot(document.getElementById('root'));
+root.render(
+	<ThemeContext.Provider>
+		<UserContext.Provider>
+			<QueryClientProvider client={queryClient}>
+				<Redux.Provider store={store}>
+					<App />
+				</Redux.Provider>
+			</QueryClientProvider>
+		</UserContext.Provider>
+	</ThemeContext.Provider>
+);
+```
+
+> 🎉 简洁配置
+
+```jsx
+const ProvidersTree = buildProvidersTree([
+	[ThemeContext.Provider],
+	[UserContext.Provider],
+	[QueryClientProvider, { client: queryClient }],
+	[Redux.Provider, { store }]
+]);
+
+const root = createRoot(document.getElementById('root'));
+root.render(
+	<ProvidersTree>
+		<App />
+	</ProvidersTree>
+);
+```
+
+```jsx
+/**
+ * 构建 ProvidersTree 的函数
+ * @param {Array} providersTreeConfig - 配置数组，包含 Provider 组件和其属性
+ * @returns {Function} - 使用 reduceRight 方法从右到左迭代 providersTreeConfig 配置数组，并将每个提供者组件和属性嵌套到子节点中。返回一个高阶函数，接受最内层渲染节点作为参数
+ */
+const buildProvidersTree = (providersTreeConfig) => {
+	return ({ children }) =>
+		providersTreeConfig.reduceRight(
+			(child, [Provider, props]) => <Provider {...props}>{child}</Provider>,
+			children
+		);
+};
+```
+
+```jsx
+/**
+ * 构建 ProvidersTree 的函数
+ * @param {Array} providersTreeConfig - 配置数组，包含 Provider 组件和其属性
+ * @returns {Function} - 使用 reduce 方法从左到右迭代 providersTreeConfig 配置数组，并通过每次迭代返回一个新的函数组件来逐步构建 ProvidersTree。返回一个函数组件，用于包装子元素并构建 ProvidersTree
+ */
+const buildProvidersTree = (providersTreeConfig) => {
+	return providersTreeConfig.reduce(
+		(AccumulatedComponents, [Provider, props]) =>
+			({ children }) =>
+				(
+					<AccumulatedComponents>
+						<Provider {...props}>{children}</Provider>
+					</AccumulatedComponents>
+				),
+		({ children }) => children
+	);
+};
 ```
 
 ## useEffect
