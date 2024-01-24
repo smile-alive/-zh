@@ -145,7 +145,7 @@ function TemplateFactory({ item }) {
 	}
 }
 
-export default function App() {
+function App() {
 	const feed = [
 		{ type: 'post', content: 'This is a great day!', author: 'Alex' },
 		{ type: 'code_block', code: 'public void static main...' },
@@ -316,6 +316,110 @@ const buildProvidersTree = (providersTreeConfig) => {
 
 ## useEffect
 
+### 😣 不要在 useEffect 中同步状态
+
+> ❌ useEffect 应该用于在 React 代码和非 React 代码（外部系统）之间建立同步。
+
+```jsx
+function UserForm() {
+	const [value, setValue] = useState('');
+	const [isValid, setIsValid] = useState(false);
+
+	const handleChange = (e) => {
+		const value = e.target.value;
+		setValue(value);
+	};
+
+	useEffect(() => {
+		if (isValueValid(value)) {
+			setIsValid(true);
+		} else {
+			setIsValid(false);
+		}
+	}, [value]);
+
+	return (
+		<form>
+			<label htmlFor='input'>Year of birth</label>
+			<br />
+			<input type='text' id='input' value={value} onChange={handleChange} />
+		</form>
+	);
+}
+```
+
+> 🎉 直接在事件处理程序中同步状态
+
+```jsx
+function UserForm() {
+	const [value, setValue] = useState('');
+	const [isValid, setIsValid] = useState(false);
+
+	const handleChange = (e) => {
+		const value = e.target.value;
+		setValue(value);
+
+		if (isValueValid(value)) {
+			setIsValid(true);
+		} else {
+			setIsValid(false);
+		}
+	};
+
+	return (
+		<form>
+			<label htmlFor='input'>Year of birth</label>
+			<br />
+			<input type='text' id='input' value={value} onChange={handleChange} />
+		</form>
+	);
+}
+```
+
 ## useState
+
+> 减少不必要的渲染，可以大大提升软件的性能
+
+### 🤪 状态下沉
+
+> 每次 `name` 的变更都会引起 `<PageContent>` 重新渲染，带来不必要的性能开销。
+
+```jsx
+function App() {
+	const [name, setName] = useState('');
+
+	return (
+		<>
+			<form>
+				<input value={name} onChange={(e) => setName(e.target.value)} />
+			</form>
+			<PageContent />
+		</>
+	);
+}
+```
+
+> 将 `name` 移到独立的组件中，以避免 `<PageContent>` 在 `name` 变更时导致的重新渲染。
+
+```jsx
+function Form() {
+	const [name, setName] = useState('');
+
+	return (
+		<form>
+			<input value={name} onChange={(e) => setName(e.target.value)} />
+		</form>
+	);
+}
+
+function App() {
+	return (
+		<>
+			<Form />
+			<PageContent />
+		</>
+	);
+}
+```
 
 ## useReducer
