@@ -32,7 +32,7 @@ function App(props) {
 }
 ```
 
-> 🎉 创建一个巧妙的抽象，负责处理筛选条件的创建。
+> ✅ 创建一个巧妙的抽象，负责处理筛选条件的创建。
 
 ```jsx
 function createFilter(props) {
@@ -217,7 +217,7 @@ function App({ user }) {
 }
 ```
 
-> 🎉 通过条件提前返回，提高可读性
+> ✅ 通过条件提前返回，提高可读性
 
 ```jsx
 function App({ user }) {
@@ -261,7 +261,7 @@ root.render(
 );
 ```
 
-> 🎉 简洁配置
+> ✅ 简洁配置
 
 ```jsx
 const ProvidersTree = buildProvidersTree([
@@ -314,7 +314,7 @@ const buildProvidersTree = (providersTreeConfig) => {
 };
 ```
 
-## useEffect
+## Effect
 
 ### 😣 不要在 useEffect 中同步状态
 
@@ -348,7 +348,7 @@ function UserForm() {
 }
 ```
 
-> 🎉 直接在事件处理程序中同步状态
+> ✅ 直接在事件处理程序中同步状态
 
 ```jsx
 function UserForm() {
@@ -376,9 +376,9 @@ function UserForm() {
 }
 ```
 
-## useState
+## State
 
-> 减少不必要的渲染，可以大大提升软件的性能
+> 在 `React` 中，减少不必要的渲染对于提升软件性能至关重要，因为 `state` 的变化会触发重新渲染。
 
 ### 🤪 状态下沉
 
@@ -399,7 +399,7 @@ function App() {
 }
 ```
 
-> 将 `name` 移到独立的组件中，以避免 `<PageContent>` 在 `name` 变更时导致的重新渲染。
+> 将 `name` 移到独立的组件中，可以避免 `<PageContent>` 在 `name` 变更时导致的重新渲染。
 
 ```jsx
 function Form() {
@@ -422,4 +422,163 @@ function App() {
 }
 ```
 
-## useReducer
+## Reducer
+
+## Ref
+
+### 更安全的 DOM 操作方式
+
+> ❌ 避免直接操纵 DOM
+
+```jsx
+function App() {
+	// 添加新用户时，滚动到列表底部
+	const onAddNewUser = () => {
+		const userList = document.getElementById('user-list');
+		userList.scrollTop = userList.scrollHeight;
+	};
+
+	return (
+		<>
+			<ul id='user-list'>
+				<li>User 1</li>
+				<li>User 2</li>
+				{/* ... */}
+			</ul>
+			<button onClick={onAddNewUser}>Add User</button>
+		</>
+	);
+}
+```
+
+> ✅ 使用 `ref` 代替直接 DOM 操作
+
+```jsx
+function App() {
+	const userListRef = useRef(null);
+
+	const onAddNewUser = () => {
+		userListRef.current.scrollTop = userListRef.current.scrollHeight;
+	};
+
+	return (
+		<>
+			<ul id='user-list' ref={userListRef}>
+				<li>User 1</li>
+				<li>User 2</li>
+				{/* ... */}
+			</ul>
+			<button onClick={onAddNewUser}>Add User</button>
+		</>
+	);
+}
+```
+
+### 使用 `forwardRef` 实现 `ref` 透传
+
+```jsx
+function App() {
+	const userListRef = useRef(null);
+
+	const onAddNewUser = () => {
+		userListRef.current.scrollTop = userListRef.current.scrollHeight;
+	};
+
+	return <UserList ref={userListRef} />;
+}
+
+const List = React.forwardRef(function List(props, ref) {
+	return (
+		<ul id='user-list' ref={ref}>
+			<li>User 1</li>
+			<li>User 2</li>
+			{/* ... */}
+		</ul>
+	);
+});
+```
+
+### 使用 `forwardRef` 与 `useImperativeHandle` 暴露组件方法
+
+```jsx
+function App() {
+	const userListRef = useRef(null);
+
+	const onAddNewUser = () => userListRef.current.scrollToBottom();
+
+	// 我们可以通过 `userListRef` 访问 `scrollToBottom` 方法。
+	return <UserList ref={userListRef} />;
+}
+
+const List = React.forwardRef(function List(props, ref) {
+	const listRef = useRef(null);
+
+	// 我们通过引用的方式公开了 scrollToBottom 方法，这样父组件就能方便地使用它。
+	useImperativeHandle(
+		ref,
+		() => ({
+			scrollToBottom() {
+				listRef.current.scrollTop = listRef.current.scrollHeight;
+			}
+		}),
+		[]
+	);
+
+	return (
+		<ul id='user-list' ref={listRef}>
+			<li>User 1</li>
+			<li>User 2</li>
+			{/* ... */}
+		</ul>
+	);
+});
+```
+
+## Component
+
+### 🚀 灵活扩展的组件
+
+> ❌ 缺乏拓展性，对组件的微小调整就可能涉及大量属性的修改。
+>
+> 1. 如果想显示一个特定的图标？
+> 2. 或者希望在相反的位置显示图标？ ... 这样就会导致我们需要处理大量的属性和应对各种情况。
+
+```jsx
+function App() {
+	return (
+		<Alert
+			header='Upps an error occurred'
+			variant='error'
+			icon='error'
+			description='Seems like an error happened :\'
+		/>
+	);
+}
+```
+
+> ✅ 在保持组件逻辑不变的前提下，轻松扩展或覆盖功能。
+
+```jsx
+function App() {
+	return (
+		<Alert status='error'>
+			{/* Icon 的位置我们可以随便放置与更改 */}
+			<Icon />
+			<Alert.Title>Your browser is outdated!</Alert.Title>
+			<Alert.Description>Your Volunteer Hub experience may be degraded.</Alert.Description>
+		</Alert>
+	);
+}
+
+function Alert({ status, children }) {
+	return <div className={status}>{children}</div>;
+}
+
+Alert.Title = function AlertTitle({ children }) {
+	return <span className='alert-title'>{children}</span>;
+};
+
+Alert.Description = function AlertDescription({ children }) {
+	return <span className='alert-description'>{children}</span>;
+};
+```
