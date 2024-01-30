@@ -7,6 +7,7 @@
 > ❌ App 不需要关心创建哪个过滤器。
 
 ```jsx
+// bad 👎
 function App(props) {
 	if (props.type === 'city') {
 		return <CityFilter />;
@@ -19,6 +20,7 @@ function App(props) {
 ```
 
 ```jsx
+// bad 👎
 function App(props) {
 	<>
 		{props.type === 'city' ? (
@@ -35,6 +37,7 @@ function App(props) {
 > ✅ 创建一个抽象，专门负责筛选过滤。
 
 ```jsx
+// good 👍
 function createFilter(props) {
 	switch (props.type) {
 		case 'city':
