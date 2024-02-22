@@ -745,6 +745,60 @@ function App() {
 }
 ```
 
+## Memoization
+
+> `memo`、`useMemo` 和 `useCallback` 都旨在减少不必要的重新渲染，以达到性能优化的目的。
+
+### 🎃 useMemo
+
+> 点击按钮时，`count` 的更新明显变慢，因为 `bigint` 函数在每次渲染时都会重新执行，导致渲染效率低下。
+
+```jsx
+export default function App() {
+	const [count, setCount] = useState(0);
+
+	const bigint = () => {
+		let total = 0;
+		for (let index = 1; index < 1e9; index++) {
+			total += index;
+		}
+		return total;
+	};
+
+	return (
+		<div>
+			<p>{count}</p>
+			<button onClick={() => setCount((prev) => (prev += 1))}>+</button>
+			<p>{bigint()}</p>
+		</div>
+	);
+}
+```
+
+> 使用 `useMemo` 缓存耗时操作，后续的 `count` 更新不会导致 `bigint` 函数的重新执行，从而提升了渲染性能。
+
+```jsx
+export default function App() {
+	const [count, setCount] = useState(0);
+
+	const bigint = useMemo(() => {
+		let total = 0;
+		for (let index = 1; index < 1e9; index++) {
+			total += index;
+		}
+		return total;
+	}, []);
+
+	return (
+		<div>
+			<p>{count}</p>
+			<button onClick={() => setCount((prev) => (prev += 1))}>+</button>
+			<p>{bigint}</p>
+		</div>
+	);
+}
+```
+
 ## Ref
 
 > ref 不会触发组件重新渲染，通常用于获取或操作一个不影响 UI 的值。
